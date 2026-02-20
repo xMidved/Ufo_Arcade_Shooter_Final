@@ -1,70 +1,71 @@
 import pygame
 import random
 
-
 pygame.init()
 screen = pygame.display.set_mode((600, 800))
 clock = pygame.time.Clock()
 
-
-balls = []
 gravity = 0.3
+balls = []
 spawn_timer = 0
+
+class Ball:
+    def __init__(self):
+        self.r = random.randint(10, 40)                  # fixed radius
+        self.color = (0, 200, 255)                        # fixed color
+        self.y = random.randint(50, 200)
+        self.vy = -5
+
+        side = random.choice(["left", "right"])
+        if side == "left":
+            self.x = self.r
+            self.vx = 5
+        else:
+            self.x = 600 - self.r
+            self.vx = -5
+
+    def update(self):
+        self.vy += gravity
+        self.x += self.vx
+        self.y += self.vy
+
+        # bounce on floor
+        if self.y > 800 - self.r:
+            self.y = 800 - self.r
+            self.vy *= -1
+
+        # bounce on walls
+        if self.x < self.r:
+            self.x = self.r
+            self.vx *= -1
+        if self.x > 600 - self.r:
+            self.x = 600 - self.r
+            self.vx *= -1
+
+    def draw(self, surface):
+        pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.r)
 
 
 running = True
 while running:
-   fps = clock.tick(60)
-   spawn_timer += fps
-   screen.fill((30, 30, 30))
+    dt = clock.tick(60)
+    spawn_timer += dt
+    screen.fill((30, 30, 30))   # clear screen every frame
 
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
 
-   for event in pygame.event.get():
-       if event.type == pygame.QUIT:
-           running = False
+    # spawn ball every 3 seconds
+    if spawn_timer > 3000:
+        balls.append(Ball())
+        spawn_timer = 0
 
+    # update and draw all balls
+    for ball in balls:
+        ball.update()
+        ball.draw(screen)
 
-   # spawn every 3 seconds
-   if spawn_timer > 3000:
-       side = random.choice(["left", "right"])
-
-
-       if side == "left":
-           balls.append([15, random.randint(50, 200), 5, -5])
-       else:
-           balls.append([585, random.randint(50, 200), -5, -5])
-
-
-       spawn_timer = 0
-
-
-   for ball in balls:
-       ball[3] += gravity
-       ball[0] += ball[2]
-       ball[1] += ball[3]
-
-
-       # bounce on floor
-       if ball[1] > 785:
-           ball[1] = 785
-           ball[3] *= -1
-
-              # bounce on left wall
-        if ball[0] < 15:
-            ball[0] = 15
-            ball[2] *= -1
-
-        # bounce on right wall
-        if ball[0] > 585:
-            ball[0] = 585
-            ball[2] *= -1
-
-
-       pygame.draw.circle(screen, (0, 200, 255),
-                          (int(ball[0]), int(ball[1])), 15)
-
-
-   pygame.display.flip()
-
+    pygame.display.flip()
 
 pygame.quit()
