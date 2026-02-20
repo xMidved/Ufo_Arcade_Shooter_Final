@@ -30,9 +30,9 @@ while running:
 
 
        if side == "left":
-           balls.append([15, random.randint(50, 200), 6, -5])
+           balls.append([15, random.randint(50, 200), 5, -5])
        else:
-           balls.append([585, random.randint(50, 200), -6, -5])
+           balls.append([585, random.randint(50, 200), -5, -5])
 
 
        spawn_timer = 0
