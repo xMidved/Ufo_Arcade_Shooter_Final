@@ -8,7 +8,7 @@ clock = pygame.time.Clock()
 
 
 balls = []
-gravity = 0.5
+gravity = 0.3
 spawn_timer = 0
 
 
@@ -24,8 +24,8 @@ while running:
            running = False
 
 
-   # spawn every 2 seconds
-   if spawn_timer > 2000:
+   # spawn every 3 seconds
+   if spawn_timer > 3000:
        side = random.choice(["left", "right"])
 
 
@@ -47,7 +47,17 @@ while running:
        # bounce on floor
        if ball[1] > 785:
            ball[1] = 785
-           ball[3] *= -0.8
+           ball[3] *= -1
+
+              # bounce on left wall
+        if ball[0] < 15:
+            ball[0] = 15
+            ball[2] *= -1
+
+        # bounce on right wall
+        if ball[0] > 585:
+            ball[0] = 585
+            ball[2] *= -1
 
 
        pygame.draw.circle(screen, (0, 200, 255),
