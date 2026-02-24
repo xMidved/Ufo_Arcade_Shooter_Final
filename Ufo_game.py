@@ -42,10 +42,10 @@ class Ball:
         side = random.choice(["left", "right"])
         if side == "left":
             self.x = self.r
-            self.vx = 5
+            self.vx = random.randint(3,6)
         else:
             self.x = 600 - self.r
-            self.vx = -5
+            self.vx = random.randint(-3,-6)
 
     def update(self):
         self.vy += gravity
