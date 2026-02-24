@@ -29,8 +29,13 @@ spawn_timer = 0
 # Ball Class
 class Ball:
     def __init__(self):
-        self.r = random.randint(10, 40)
+        self.r = random.randint(15, 40)
+        self.max_r = self.r
         self.color = (0, 200, 255)
+
+        # Health based on size
+        self.hp = self.r // 5   # Bigger ball = more HP
+
         self.y = random.randint(50, 200)
         self.vy = -5
 
@@ -59,6 +64,13 @@ class Ball:
         if self.x > 600 - self.r:
             self.x = 600 - self.r
             self.vx *= -1
+
+    def take_damage(self):
+        self.hp -= 1
+
+        # Shrink slightly when hit
+        if self.r > 10:
+            self.r -= 2
 
     def draw(self, surface):
         pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.r)
@@ -117,7 +129,7 @@ while running:
 
         ball.draw(screen)
 
-    # Update Bullets
+        # Update Bullets
     for bullet in bullets[:]:
         bullet[1] += bullet_speed
 
@@ -130,9 +142,14 @@ while running:
         for ball in balls[:]:
             if bullet_rect.colliderect(ball.get_rect()):
                 bullets.remove(bullet)
-                balls.remove(ball)
-                break
+                ball.take_damage()
 
+                if ball.hp <= 0:
+                    balls.remove(ball)
+
+                break   # stop checking other balls for this bullet
+
+        # Draw bullet
         pygame.draw.circle(
             screen,
             (255, 255, 0),
@@ -140,8 +157,13 @@ while running:
             5
         )
 
+
     # Draw Ufo
     pygame.draw.rect(screen, (255, 100, 100), cannon_rect)
+
+    pygame.display.flip()
+
+pygame.quit()
 
     pygame.display.flip()
 
