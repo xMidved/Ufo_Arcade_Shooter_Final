@@ -45,7 +45,7 @@ class Ball:
             self.vx = random.randint(3,6)
         else:
             self.x = 600 - self.r
-            self.vx = random.randint(-3,-6)
+            self.vx = random.randint(-6,-3)
 
     def update(self):
         self.vy += gravity
