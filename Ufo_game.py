@@ -5,7 +5,7 @@ pygame.init()
 screen = pygame.display.set_mode((600, 800))
 pygame.display.set_caption("Ufo Game")
 clock = pygame.time.Clock()
-font = pygame.font.SysFont(None, 24)
+font = pygame.font.SysFont("arial", 24)
 MIN_RADIUS = 15
 
 # Player 
@@ -76,17 +76,21 @@ class Ball:
     def take_damage(self):
         self.hp -= 1
 
+
     def draw(self, surface):
-        pygame.draw.circle(surface, self.color,
-                           (int(self.x), int(self.y)), self.r)
+    # Draw ball
+        pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.r)
 
-        # HP Counter
+    # Draw HP number
         hp_text = font.render(str(self.hp), True, (255, 255, 255))
-        surface.blit(
-            hp_text,
-            (self.x - hp_text.get_width() // 2, self.y - self.r - 18)
-        )
 
+        surface.blit(
+    hp_text,
+    (
+        int(self.x - hp_text.get_width() // 2),
+        int(self.y - hp_text.get_height() // 2)
+    )
+)
     def get_rect(self):
         return pygame.Rect(
             self.x - self.r,
@@ -95,8 +99,7 @@ class Ball:
             self.r * 2
         )
 
-    def draw(self, surface):
-        pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.r)
+
 
     
     def get_rect(self):
@@ -202,3 +205,4 @@ while running:
     pygame.display.flip()
 
 pygame.quit()
+
