@@ -3,45 +3,69 @@ import random
 
 pygame.init()
 screen = pygame.display.set_mode((600, 800))
+pygame.display.set_caption("Ufo Game")
 clock = pygame.time.Clock()
+font = pygame.font.SysFont(None, 24)
+MIN_RADIUS = 15
 
+# Player 
+player_width = 60
+player_height = 20
+player_x = 270
+player_y = 750
+player_speed = 6
 
-balls = []
+# Bullets
+bullets = []
+bullet_speed = -10
+fire_delay = 200
+fire_timer = 0
+
+# Game Variables
 gravity = 0.3
+balls = []
 spawn_timer = 0
+
 
 # Ball Class
 class Ball:
-    def __init__(self):
-        self.r = random.randint(15, 40)
-        self.max_r = self.r
-        self.color = (0, 200, 255)
-
-        # Health based on size
-        self.hp = self.r // 5   # Bigger ball = more HP
-
-        self.y = random.randint(50, 200)
-        self.vy = -5
-
-        side = random.choice(["left", "right"])
-        if side == "left":
-            self.x = self.r
-            self.vx = random.randint(3,6)
+    def __init__(self, x=None, y=None, vx=None, vy=None, radius=None):
+        if radius is None:
+            self.r = random.randint(20, 40)
         else:
-            self.x = 600 - self.r
-            self.vx = random.randint(-6,-3)
+            self.r = radius
+
+        self.color = (0, 200, 255)
+        self.hp = self.r // 5
+
+        if x is None:
+            side = random.choice(["left", "right"])
+            self.y = random.randint(50, 200)
+            self.vy = -5
+
+            if side == "left":
+                self.x = self.r
+                self.vx = random.randint(3, 6)
+            else:
+                self.x = 600 - self.r
+                self.vx = random.randint(-6, -3)
+        else:
+            self.x = x
+            self.y = y
+            self.vx = vx
+            self.vy = vy
 
     def update(self):
         self.vy += gravity
         self.x += self.vx
         self.y += self.vy
 
-        # Floor bounce
+        # Floor
         if self.y > 800 - self.r:
             self.y = 800 - self.r
             self.vy *= -1
 
-        # Wall bounce
+        # Walls
         if self.x < self.r:
             self.x = self.r
             self.vx *= -1
@@ -52,13 +76,29 @@ class Ball:
     def take_damage(self):
         self.hp -= 1
 
-        # Shrink slightly when hit
-        if self.r > 10:
-            self.r -= 2
+    def draw(self, surface):
+        pygame.draw.circle(surface, self.color,
+                           (int(self.x), int(self.y)), self.r)
+
+        # HP Counter
+        hp_text = font.render(str(self.hp), True, (255, 255, 255))
+        surface.blit(
+            hp_text,
+            (self.x - hp_text.get_width() // 2, self.y - self.r - 18)
+        )
+
+    def get_rect(self):
+        return pygame.Rect(
+            self.x - self.r,
+            self.y - self.r,
+            self.r * 2,
+            self.r * 2
+        )
 
     def draw(self, surface):
         pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.r)
 
+    
     def get_rect(self):
         return pygame.Rect(
             self.x - self.r,
@@ -71,61 +111,94 @@ class Ball:
 # Main Game Loop
 running = True
 while running:
-   fps = clock.tick(60)
-   spawn_timer += fps
-   screen.fill((30, 30, 30))
+    dt = clock.tick(60)
+    fire_timer += dt
+    spawn_timer += dt
 
+    screen.fill((30, 30, 30))
 
-   for event in pygame.event.get():
-       if event.type == pygame.QUIT:
-           running = False
+    # Events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
 
+    # Player Movement
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_LEFT]:
+        player_x -= player_speed
+    if keys[pygame.K_RIGHT]:
+        player_x += player_speed
 
-   # spawn every 3 seconds
-   if spawn_timer > 3000:
-       side = random.choice(["left", "right"])
-
-
-       if side == "left":
-           balls.append([15, random.randint(50, 200), 5, -5])
-       else:
-           balls.append([585, random.randint(50, 200), -5, -5])
-
-
-       spawn_timer = 0
-
-    # ------------------
-    # Cannon rect
-    # ------------------
+    player_x = max(0, min(600 - player_width, player_x))
     cannon_rect = pygame.Rect(player_x, player_y, player_width, player_height)
 
-   for ball in balls:
-       ball[3] += gravity
-       ball[0] += ball[2]
-       ball[1] += ball[3]
+    # Auto Fire
+    if fire_timer >= fire_delay:
+        bullets.append([player_x + player_width // 2, player_y])
+        fire_timer = 0
+
+    # Spawn Balls
+    if spawn_timer > 3000:
+        balls.append(Ball())
+        spawn_timer = 0
 
 
-       # bounce on floor
-       if ball[1] > 785:
-           ball[1] = 785
-           ball[3] *= -1
+    # Update Balls
+    for ball in balls[:]:
+        ball.update()
 
-              # bounce on left wall
-        if ball[0] < 15:
-            ball[0] = 15
-            ball[2] *= -1
+        # Collision with cannon
+        if cannon_rect.colliderect(ball.get_rect()):
+            running = False
 
-        # bounce on right wall
-        if ball[0] > 585:
-            ball[0] = 585
-            ball[2] *= -1
+        ball.draw(screen)
 
+        # Update Bullets
+    for bullet in bullets[:]:
+        bullet[1] += bullet_speed
 
-       pygame.draw.circle(screen, (0, 200, 255),
-                          (int(ball[0]), int(ball[1])), 15)
+        if bullet[1] < 0:
+            bullets.remove(bullet)
+            continue
 
+        bullet_rect = pygame.Rect(bullet[0] - 5, bullet[1] - 5, 10, 10)
+
+        for ball in balls[:]:
+            if bullet_rect.colliderect(ball.get_rect()):
+                if bullet in bullets:
+                    bullets.remove(bullet)
+
+                ball.take_damage()
+
+        # If ball destroyed
+                if ball.hp <= 0:
+                    x, y = ball.x, ball.y
+                    vx = ball.vx
+                    r = ball.r
+
+                    balls.remove(ball)
+
+            # Split if big enough
+                    if r > MIN_RADIUS:
+                        new_r = r // 2
+                        balls.append(Ball(x, y, -abs(vx), -5, new_r))
+                        balls.append(Ball(x, y, abs(vx), -5, new_r))
+
+                break 
+                
+        # Draw bullet
+        pygame.draw.circle(
+            screen,
+            (255, 255, 0),
+            (int(bullet[0]), int(bullet[1])),
+            5
+        )
+    
+
+    # Draw Ufo
+    
+    pygame.draw.rect(screen, (255, 100, 100), cannon_rect)
 
     pygame.display.flip()
-
 
 pygame.quit()
