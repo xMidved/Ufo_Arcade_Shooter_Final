@@ -15,13 +15,13 @@ player_width = 60
 player_height = 20
 player_x = 270
 player_y = 750
-player_speed = 6
+player_speed = 20
 
 # ------------------
 # Bullets
 # ------------------
 bullets = []
-bullet_speed = -30
+bullet_speed = -25
 fire_delay = 100
 fire_timer = 0
 
@@ -29,7 +29,7 @@ fire_timer = 0
 # Balls
 # ------------------
 balls = []
-gravity = 0.1
+gravity = 0.09
 spawn_timer = 0
 SPAWN_DELAY = 4000
 MIN_RADIUS = 15
