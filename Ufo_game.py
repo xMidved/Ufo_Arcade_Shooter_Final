@@ -6,9 +6,11 @@ screen = pygame.display.set_mode((600, 800))
 pygame.display.set_caption("Ufo Game")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("arial", 24)
-MIN_RADIUS = 15
+MIN_RADIUS = 25
+bullet_img = pygame.image.load("Bullet.png").convert_alpha()
+bullet_img = pygame.transform.scale(bullet_img, (18, 18))  # resize if needed
 
-# Player 
+# Player   
 player_width = 60
 player_height = 20
 player_x = 270
@@ -17,8 +19,8 @@ player_speed = 6
 
 # Bullets
 bullets = []
-bullet_speed = -10
-fire_delay = 200
+bullet_speed = -15
+fire_delay = 150
 fire_timer = 0
 
 # Game Variables
@@ -183,19 +185,14 @@ while running:
 
             # Split if big enough
                     if r > MIN_RADIUS:
-                        new_r = r // 2
+                        new_r = r // 1.5
                         balls.append(Ball(x, y, -abs(vx), -5, new_r))
                         balls.append(Ball(x, y, abs(vx), -5, new_r))
 
                 break 
                 
         # Draw bullet
-        pygame.draw.circle(
-            screen,
-            (255, 255, 0),
-            (int(bullet[0]), int(bullet[1])),
-            5
-        )
+        screen.blit(bullet_img,(int(bullet[0] - bullet_img.get_width() // 2),int(bullet[1] - bullet_img.get_height() // 2)))
     
 
     # Draw Ufo
@@ -205,4 +202,3 @@ while running:
     pygame.display.flip()
 
 pygame.quit()
-
