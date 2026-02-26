@@ -7,9 +7,9 @@ pygame.display.set_caption("Ufo Game")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("arial", 24)
 MIN_RADIUS = 25
-bullet_img = pygame.image.load("Bullet.png").convert_alpha()
+bullet_img = pygame.image.load("assets/Bullet.png").convert_alpha()
 bullet_img = pygame.transform.scale(bullet_img, (18, 18))
-ufo_img = pygame.image.load("UFO.png").convert_alpha()
+ufo_img = pygame.image.load("assets/UFO.png").convert_alpha()
 ufo_img = pygame.transform.scale(ufo_img, (100, 100))  # resize if needed
 
 # Player   
