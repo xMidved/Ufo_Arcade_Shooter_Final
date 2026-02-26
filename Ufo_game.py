@@ -8,13 +8,15 @@ clock = pygame.time.Clock()
 font = pygame.font.SysFont("arial", 24)
 MIN_RADIUS = 25
 bullet_img = pygame.image.load("Bullet.png").convert_alpha()
-bullet_img = pygame.transform.scale(bullet_img, (18, 18))  # resize if needed
+bullet_img = pygame.transform.scale(bullet_img, (18, 18))
+ufo_img = pygame.image.load("UFO.png").convert_alpha()
+ufo_img = pygame.transform.scale(ufo_img, (100, 100))  # resize if needed
 
 # Player   
 player_width = 60
 player_height = 20
 player_x = 270
-player_y = 750
+player_y = 720
 player_speed = 6
 
 # Bullets
@@ -197,7 +199,7 @@ while running:
 
     # Draw Ufo
     
-    pygame.draw.rect(screen, (255, 100, 100), cannon_rect)
+    screen.blit(ufo_img, (player_x, player_y))
 
     pygame.display.flip()
 
