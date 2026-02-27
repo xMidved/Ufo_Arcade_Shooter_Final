@@ -1,170 +1,228 @@
 import pygame
 import random
+import math
 
 pygame.init()
-screen = pygame.display.set_mode((600, 800))
-pygame.display.set_caption("Ball Blast Prototype")
+screen = pygame.display.set_mode((800, 1000))
+pygame.display.set_caption("Ufo Game")
 clock = pygame.time.Clock()
+font = pygame.font.SysFont("arial", 24)
 
-font = pygame.font.SysFont(None, 24)
+MIN_RADIUS = 25
+FIELD_WIDTH = 800
+FLOOR_Y = 800
 
-# ------------------
-# Cannon
-# ------------------
-player_width = 60
+bullet_img = pygame.image.load("assets/Bullet.png").convert_alpha()
+bullet_img = pygame.transform.scale(bullet_img, (18, 18))
+
+ufo_img = pygame.image.load("assets/UFO.png").convert_alpha()
+ufo_img = pygame.transform.scale(ufo_img, (100, 100))
+
+# ---------------- PLAYER ----------------
+player_width = 50
 player_height = 20
-player_x = 270
-player_y = 750
-player_speed = 20
+player_x = FIELD_WIDTH // 2 - player_width // 2
+player_y = 720
+player_speed = 10
 
-# ------------------
-# Bullets
-# ------------------
-bullets = []
-bullet_speed = -25
-fire_delay = 100
+# ---------------- BULLETS ----------------
+bullets = []  # [x, y, vx, vy]
+BULLET_SPEED = 15
+fire_delay = 150
 fire_timer = 0
 
-# ------------------
-# Balls
-# ------------------
+# ---------------- GAME ----------------
+gravity = 0.3
 balls = []
-gravity = 0.09
 spawn_timer = 0
-SPAWN_DELAY = 4000
-MIN_RADIUS = 15
 
-# ------------------
-# Helpers
-# ------------------
-def spawn_ball(x, y, vx, vy, radius):
-    hp = radius // 5
-    balls.append([x, y, vx, vy, radius, hp])
+# ---------------- POWER UPS ----------------
+POWER_TYPES = ["rapid_fire", "double_shot", "triple_shot"]
+powerups = []
+active_power = None
+power_timer = 0
+POWER_DURATION = 5000
 
-# ------------------
-# Game loop
-# ------------------
+
+# ---------------- BALL ----------------
+class Ball:
+    def __init__(self, x=None, y=None, vx=None, vy=None, radius=None):
+        self.r = radius if radius else random.randint(20, 40)
+        self.color = (0, 200, 255)
+        self.hp = self.r // 5
+
+        if x is None:
+            side = random.choice(["left", "right"])
+            self.y = random.randint(50, 200)
+            self.vy = -5
+            if side == "left":
+                self.x = self.r
+                self.vx = random.randint(3, 6)
+            else:
+                self.x = FIELD_WIDTH - self.r
+                self.vx = random.randint(-6, -3)
+        else:
+            self.x, self.y, self.vx, self.vy = x, y, vx, vy
+
+    def update(self):
+        self.vy += gravity
+        self.x += self.vx
+        self.y += self.vy
+
+        if self.y > FLOOR_Y - self.r:
+            self.y = FLOOR_Y - self.r
+            self.vy = -self.vy + gravity
+
+        if self.x < self.r or self.x > FIELD_WIDTH - self.r:
+            self.vx *= -1
+
+    def take_damage(self):
+        self.hp -= 1
+
+    def draw(self, surface):
+        pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.r)
+        hp_text = font.render(str(self.hp), True, (255, 255, 255))
+        surface.blit(
+            hp_text,
+            (int(self.x - hp_text.get_width() // 2),
+             int(self.y - hp_text.get_height() // 2))
+        )
+
+    def get_rect(self):
+        return pygame.Rect(self.x - self.r, self.y - self.r, self.r * 2, self.r * 2)
+
+
+# ---------------- POWERUP ----------------
+class PowerUp:
+    def __init__(self, x, y, kind):
+        self.x = x
+        self.y = y
+        self.kind = kind
+        self.vy = 6
+        self.size = 20
+        self.color = {
+            "rapid_fire": (255, 50, 50),
+            "double_shot": (50, 255, 50),
+            "triple_shot": (50, 50, 255)
+        }[kind]
+
+    def update(self):
+        self.y += self.vy
+
+    def draw(self, surface):
+        pygame.draw.rect(surface, self.color,
+                         (self.x - 10, self.y - 10, 20, 20))
+
+    def get_rect(self):
+        return pygame.Rect(self.x - 10, self.y - 10, 20, 20)
+
+
+# ---------------- MAIN LOOP ----------------
 running = True
 while running:
-    fps = clock.tick(60)
-    fire_timer += fps
-    spawn_timer += fps
+    dt = clock.tick(60)
+    fire_timer += dt
+    spawn_timer += dt
 
     screen.fill((30, 30, 30))
 
-    # ------------------
-    # Events
-    # ------------------
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    # ------------------
-    # Cannon movement
-    # ------------------
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT]:
         player_x -= player_speed
     if keys[pygame.K_RIGHT]:
         player_x += player_speed
 
-    player_x = max(0, min(600 - player_width, player_x))
+    player_x = max(0, min(FIELD_WIDTH - player_width, player_x))
     cannon_rect = pygame.Rect(player_x, player_y, player_width, player_height)
 
-    # ------------------
-    # Auto fire
-    # ------------------
+    # -------- POWER TIMER --------
+    if active_power:
+        power_timer += dt
+        if power_timer >= POWER_DURATION:
+            active_power = None
+            fire_delay = 150
+
+    if active_power == "rapid_fire":
+        fire_delay = 60
+
+    # -------- AUTO FIRE --------
     if fire_timer >= fire_delay:
-        bullets.append([player_x + player_width // 2, player_y])
+        cx = player_x + player_width // 2
+
+        if active_power == "double_shot":
+            bullets.append([cx - 10, player_y, 0, -BULLET_SPEED])
+            bullets.append([cx + 10, player_y, 0, -BULLET_SPEED])
+
+        elif active_power == "triple_shot":
+            bullets.append([cx, player_y, 0, -BULLET_SPEED])
+            bullets.append([cx, player_y, -5, -BULLET_SPEED])
+            bullets.append([cx, player_y, 5, -BULLET_SPEED])
+
+        else:
+            bullets.append([cx, player_y, 0, -BULLET_SPEED])
+
         fire_timer = 0
 
-    # ------------------
-    # Spawn balls (slower)
-    # ------------------
-    if spawn_timer > SPAWN_DELAY:
-        side = random.choice(["left", "right"])
-        y = random.randint(50, 200)
-        radius = 40
-
-        if side == "left":
-            spawn_ball(15, y, 5, -5, radius)
-        else:
-            spawn_ball(585, y, -5, -5, radius)
-
+    # -------- SPAWN BALLS --------
+    if spawn_timer > 5000:
+        balls.append(Ball())
         spawn_timer = 0
 
-    # ------------------
-    # Update balls
-    # ------------------
+    # -------- BALLS --------
     for ball in balls[:]:
-        x, y, vx, vy, r, hp = ball
-
-        vy += gravity
-        x += vx
-        y += vy
-
-        # Floor
-        if y > 800 - r:
-            y = 800 - r
-            vy *= -1
-
-        # Walls
-        if x < r:
-            x = r
-            vx *= -1
-        if x > 600 - r:
-            x = 600 - r
-            vx *= -1
-
-        ball[0], ball[1], ball[2], ball[3] = x, y, vx, vy
-
-        ball_rect = pygame.Rect(x - r, y - r, r * 2, r * 2)
-
-        if cannon_rect.colliderect(ball_rect):
+        ball.update()
+        if cannon_rect.colliderect(ball.get_rect()):
             running = False
+        ball.draw(screen)
 
-        # Draw ball
-        pygame.draw.circle(screen, (0, 200, 255), (int(x), int(y)), r)
-
-        # Draw HP text
-        hp_text = font.render(str(hp), True, (255, 255, 255))
-        screen.blit(hp_text, (x - hp_text.get_width() // 2, y - r - 18))
-
-    # ------------------
-    # Update bullets
-    # ------------------
+    # -------- BULLETS --------
     for bullet in bullets[:]:
-        bullet[1] += bullet_speed
-        if bullet[1] < 0:
+        bullet[0] += bullet[2]
+        bullet[1] += bullet[3]
+
+        if bullet[1] < 0 or bullet[0] < 0 or bullet[0] > FIELD_WIDTH:
             bullets.remove(bullet)
             continue
 
-        bullet_rect = pygame.Rect(bullet[0] - 4, bullet[1] - 4, 8, 8)
+        bullet_rect = pygame.Rect(bullet[0] - 5, bullet[1] - 5, 10, 10)
 
         for ball in balls[:]:
-            x, y, vx, vy, r, hp = ball
-            ball_rect = pygame.Rect(x - r, y - r, r * 2, r * 2)
-
-            if bullet_rect.colliderect(ball_rect):
+            if bullet_rect.colliderect(ball.get_rect()):
                 bullets.remove(bullet)
-                ball[5] -= 1
+                ball.take_damage()
 
-                if ball[5] <= 0:
+                if ball.hp <= 0:
+                    x, y, vx, r, vy = ball.x, ball.y, ball.vx, ball.r, ball.vy
                     balls.remove(ball)
+
+                    if random.random() < 0.3:
+                        powerups.append(PowerUp(x, y, random.choice(POWER_TYPES)))
+
                     if r > MIN_RADIUS:
-                        new_r = r // 2
-                        spawn_ball(x, y, -abs(vx), -5, new_r)
-                        spawn_ball(x, y, abs(vx), -5, new_r)
+                        new_r = r // 1.5
+                        split_vy = -abs(vy)
+                        balls.append(Ball(x, y, -abs(vx), split_vy, new_r))
+                        balls.append(Ball(x, y, abs(vx), split_vy, new_r))
                 break
 
-        pygame.draw.circle(screen, (255, 255, 0),
-                           (int(bullet[0]), int(bullet[1])), 4)
+        screen.blit(bullet_img, (bullet[0] - 9, bullet[1] - 9))
 
-    # ------------------
-    # Draw cannon
-    # ------------------
-    pygame.draw.rect(screen, (255, 100, 100), cannon_rect)
+    # -------- POWERUPS --------
+    for p in powerups[:]:
+        p.update()
+        p.draw(screen)
+        if cannon_rect.colliderect(p.get_rect()):
+            active_power = p.kind
+            power_timer = 0
+            powerups.remove(p)
+        elif p.y > 1000:
+            powerups.remove(p)
 
+    screen.blit(ufo_img, (player_x, player_y))
     pygame.display.flip()
 
 pygame.quit()
