@@ -1,6 +1,5 @@
 import pygame
 import random
-import math
 
 pygame.init()
 screen = pygame.display.set_mode((800, 1000))
@@ -17,6 +16,8 @@ bullet_img = pygame.transform.scale(bullet_img, (18, 18))
 
 ufo_img = pygame.image.load("assets/UFO.png").convert_alpha()
 ufo_img = pygame.transform.scale(ufo_img, (100, 100))
+
+meteor_img = pygame.image.load("meteor.png").convert_alpha()
 
 # ---------------- PLAYER ----------------
 player_width = 50
@@ -35,6 +36,7 @@ fire_timer = 0
 gravity = 0.3
 balls = []
 spawn_timer = 0
+score = 0
 
 # ---------------- POWER UPS ----------------
 POWER_TYPES = ["rapid_fire", "double_shot", "triple_shot"]
@@ -48,8 +50,11 @@ POWER_DURATION = 5000
 class Ball:
     def __init__(self, x=None, y=None, vx=None, vy=None, radius=None):
         self.r = radius if radius else random.randint(20, 40)
-        self.color = (0, 200, 255)
         self.hp = self.r // 5
+
+        self.image = pygame.transform.scale(
+            meteor_img, (self.r * 2, self.r * 2)
+        )
 
         if x is None:
             side = random.choice(["left", "right"])
@@ -73,14 +78,21 @@ class Ball:
             self.y = FLOOR_Y - self.r
             self.vy = -self.vy + gravity
 
-        if self.x < self.r or self.x > FIELD_WIDTH - self.r:
-            self.vx *= -1
+        if self.x < self.r:
+            self.x = self.r
+            self.vx = -self.vx
+        if self.x > FIELD_WIDTH - self.r:
+            self.x = FIELD_WIDTH - self.r
+            self.vx = -self.vx
 
     def take_damage(self):
         self.hp -= 1
 
     def draw(self, surface):
-        pygame.draw.circle(surface, self.color, (int(self.x), int(self.y)), self.r)
+        surface.blit(
+            self.image,
+            (int(self.x - self.r), int(self.y - self.r))
+        )
         hp_text = font.render(str(self.hp), True, (255, 255, 255))
         surface.blit(
             hp_text,
@@ -110,8 +122,11 @@ class PowerUp:
         self.y += self.vy
 
     def draw(self, surface):
-        pygame.draw.rect(surface, self.color,
-                         (self.x - 10, self.y - 10, 20, 20))
+        pygame.draw.rect(
+            surface,
+            self.color,
+            (self.x - 10, self.y - 10, 20, 20)
+        )
 
     def get_rect(self):
         return pygame.Rect(self.x - 10, self.y - 10, 20, 20)
@@ -194,8 +209,10 @@ while running:
             if bullet_rect.colliderect(ball.get_rect()):
                 bullets.remove(bullet)
                 ball.take_damage()
+                score += 1  # hit score
 
                 if ball.hp <= 0:
+                    score += 10  # destroy bonus
                     x, y, vx, r, vy = ball.x, ball.y, ball.vx, ball.r, ball.vy
                     balls.remove(ball)
 
@@ -221,6 +238,10 @@ while running:
             powerups.remove(p)
         elif p.y > 1000:
             powerups.remove(p)
+
+    # -------- SCORE --------
+    score_text = font.render(f"Score: {score}", True, (255, 255, 255))
+    screen.blit(score_text, (20, 20))
 
     screen.blit(ufo_img, (player_x, player_y))
     pygame.display.flip()
