@@ -17,7 +17,7 @@ bullet_img = pygame.transform.scale(bullet_img, (18, 18))
 ufo_img = pygame.image.load("assets/UFO.png").convert_alpha()
 ufo_img = pygame.transform.scale(ufo_img, (100, 100))
 
-meteor_img = pygame.image.load("meteor.png").convert_alpha()
+meteor_img = pygame.image.load("assets/meteor.png").convert_alpha()
 
 # ---------------- PLAYER ----------------
 player_width = 50
@@ -33,7 +33,7 @@ fire_delay = 150
 fire_timer = 0
 
 # ---------------- GAME ----------------
-gravity = 0.3
+gravity = 0.2
 balls = []
 spawn_timer = 0
 score = 0
