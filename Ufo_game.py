@@ -232,9 +232,12 @@ while running:
 
         # End planet
         if planet_hp <= 0:
+            planet_spawn_timer = 0
             planet_active = None
             wind_force = 0
             wave_timer = 0
+            
+
 
     #AUTO FIRE
     if fire_timer >= fire_delay:
