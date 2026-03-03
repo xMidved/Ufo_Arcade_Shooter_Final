@@ -42,7 +42,6 @@ planet_active = None
 planet_hp = 0
 planet_timer = 0
 planet_spawn_timer = 0
-PLANET_DURATION = 10000  # 10 seconds
 PLANET_INTERVAL = 15000  # spawn every 15 sec
 wind_force = 0
 wave_timer = 0
@@ -232,7 +231,7 @@ while running:
         pygame.draw.rect(screen, (255, 0, 0), (250, 40, 300 * (planet_hp/40), 20))
 
         # End planet
-        if planet_timer >= PLANET_DURATION or planet_hp <= 0:
+        if planet_hp <= 0:
             planet_active = None
             wind_force = 0
             wave_timer = 0
