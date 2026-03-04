@@ -11,12 +11,14 @@ MIN_RADIUS = 25
 FIELD_WIDTH = 800
 FLOOR_Y = 800
 
-bullet_img = pygame.image.load("Bullet.png").convert_alpha()
+bullet_img = pygame.image.load("assets/Bullet.png").convert_alpha()
 bullet_img = pygame.transform.scale(bullet_img, (18, 18))
+neptune_img = pygame.image.load("assets/neptune.png").convert_alpha()
+neptune_img = pygame.transform.scale(neptune_img, (450, 450))
+earth_img = pygame.image.load("assets/earth.png").convert_alpha()
+earth_img = pygame.transform.scale(earth_img, (200, 200))
 
-
-
-meteor_img = pygame.image.load("meteor.png").convert_alpha()
+meteor_img = pygame.image.load("assets/meteor.png").convert_alpha()
 
 #PLAYER
 player_width = 50
@@ -172,9 +174,8 @@ while running:
 
     player_x = max(0, min(FIELD_WIDTH - player_width, player_x))
     cannon_rect = pygame.Rect(player_x + 25, player_y + 30, player_width, player_height)
-    pygame.draw.rect(screen, (255, 0, 0), cannon_rect, 2)
 
-    ufo_img = pygame.image.load("UFO.png").convert_alpha()
+    ufo_img = pygame.image.load("assets/UFO.png").convert_alpha()
     ufo_img = pygame.transform.scale(ufo_img, (100, 100))
 
     #POWER TIMER
@@ -200,7 +201,7 @@ while running:
 
         #NEPTUNE (Wind Push)
         if planet_active == "neptune":
-            pygame.draw.circle(screen, (0, 120, 255), planet_rect.center, 80)
+            screen.blit(neptune_img, (planet_rect.x - 150, planet_rect.y - 150))
 
             if (planet_timer // 2000) % 2 == 0:
                 wind_force = 3
@@ -211,7 +212,7 @@ while running:
 
         #EARTH (Side Waves)
         elif planet_active == "earth":
-            pygame.draw.circle(screen, (0, 200, 100), planet_rect.center, 80)
+            screen.blit(earth_img, (planet_rect.x-20, planet_rect.y-20))
 
             wave_timer += dt
             if wave_timer > 2500:
@@ -240,20 +241,22 @@ while running:
 
 
     #AUTO FIRE
+# AUTO FIRE
     if fire_timer >= fire_delay:
-        cx = player_x + player_width // 2
+        cx = player_x + 50      
+        cy = player_y + 25         
 
         if active_power == "double_shot":
-            bullets.append([cx - 10, player_y, 0, -BULLET_SPEED])
-            bullets.append([cx + 10, player_y, 0, -BULLET_SPEED])
+            bullets.append([cx - 15, cy, 0, -BULLET_SPEED])
+            bullets.append([cx + 15, cy, 0, -BULLET_SPEED])
 
         elif active_power == "triple_shot":
-            bullets.append([cx, player_y, 0, -BULLET_SPEED])
-            bullets.append([cx, player_y, -5, -BULLET_SPEED])
-            bullets.append([cx, player_y, 5, -BULLET_SPEED])
+            bullets.append([cx, cy, 0, -BULLET_SPEED])
+            bullets.append([cx, cy, -5, -BULLET_SPEED])
+            bullets.append([cx, cy, 5, -BULLET_SPEED])
 
         else:
-            bullets.append([cx, player_y, 0, -BULLET_SPEED])
+            bullets.append([cx, cy, 0, -BULLET_SPEED])
 
         fire_timer = 0
 
