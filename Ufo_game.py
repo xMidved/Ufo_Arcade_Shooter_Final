@@ -209,7 +209,6 @@ while True:
         player_x += player_speed
     player_x = max(0, min(FIELD_WIDTH - ufo_width, player_x))
     cannon_rect = pygame.Rect(player_x + 25, 720 + 30, player_width, player_height)
-    pygame.draw.rect(screen, (255, 0, 0), cannon_rect, 2)
     ufo_img = ufo_img_orig
 
     # POWER TIMER
