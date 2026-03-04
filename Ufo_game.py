@@ -52,7 +52,6 @@ PLANET_INTERVAL = 15000  # spawn every 15 sec
 # POWER UPS
 POWER_TYPES = ["rapid_fire", "double_shot", "triple_shot"]
 POWER_DURATION = 5000
-
 gravity = 0.2
 
 
