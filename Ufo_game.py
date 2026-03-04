@@ -240,20 +240,22 @@ while running:
 
 
     #AUTO FIRE
+# AUTO FIRE
     if fire_timer >= fire_delay:
-        cx = player_x + player_width // 2
+        cx = player_x + 50      
+        cy = player_y + 25         
 
         if active_power == "double_shot":
-            bullets.append([cx - 10, player_y, 0, -BULLET_SPEED])
-            bullets.append([cx + 10, player_y, 0, -BULLET_SPEED])
+            bullets.append([cx - 15, cy, 0, -BULLET_SPEED])
+            bullets.append([cx + 15, cy, 0, -BULLET_SPEED])
 
         elif active_power == "triple_shot":
-            bullets.append([cx, player_y, 0, -BULLET_SPEED])
-            bullets.append([cx, player_y, -5, -BULLET_SPEED])
-            bullets.append([cx, player_y, 5, -BULLET_SPEED])
+            bullets.append([cx, cy, 0, -BULLET_SPEED])
+            bullets.append([cx, cy, -5, -BULLET_SPEED])
+            bullets.append([cx, cy, 5, -BULLET_SPEED])
 
         else:
-            bullets.append([cx, player_y, 0, -BULLET_SPEED])
+            bullets.append([cx, cy, 0, -BULLET_SPEED])
 
         fire_timer = 0
 
