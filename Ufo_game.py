@@ -15,6 +15,8 @@ bullet_img = pygame.image.load("assets/Bullet.png").convert_alpha()
 bullet_img = pygame.transform.scale(bullet_img, (18, 18))
 neptune_img = pygame.image.load("assets/neptune.png").convert_alpha()
 neptune_img = pygame.transform.scale(neptune_img, (450, 450))
+earth_img = pygame.image.load("assets/earth.png").convert_alpha()
+earth_img = pygame.transform.scale(earth_img, (200, 200))
 
 meteor_img = pygame.image.load("assets/meteor.png").convert_alpha()
 
@@ -210,7 +212,7 @@ while running:
 
         #EARTH (Side Waves)
         elif planet_active == "earth":
-            pygame.draw.circle(screen, (0, 200, 100), planet_rect.center, 80)
+            screen.blit(earth_img, (planet_rect.x-20, planet_rect.y-20))
 
             wave_timer += dt
             if wave_timer > 2500:
