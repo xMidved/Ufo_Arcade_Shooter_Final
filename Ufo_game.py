@@ -11,61 +11,44 @@ MIN_RADIUS = 25
 FIELD_WIDTH = 800
 FLOOR_Y = 800
 
+# Load images
 bullet_img = pygame.image.load("assets/Bullet.png").convert_alpha()
 bullet_img = pygame.transform.scale(bullet_img, (18, 18))
 neptune_img = pygame.image.load("assets/neptune.png").convert_alpha()
 neptune_img = pygame.transform.scale(neptune_img, (450, 450))
 earth_img = pygame.image.load("assets/earth.png").convert_alpha()
 earth_img = pygame.transform.scale(earth_img, (200, 200))
-
+ufo_img_orig = pygame.image.load("assets/UFO.png").convert_alpha()
+ufo_img_orig = pygame.transform.scale(ufo_img_orig, (100, 100))
 meteor_img = pygame.image.load("assets/meteor.png").convert_alpha()
 
-#PLAYER
+# PLAYER
 player_width = 50
 player_height = 27
-player_x = FIELD_WIDTH // 2 - player_width // 2
-player_y = 720
 player_speed = 10
 
-#BULLETS
-bullets = []  # [x, y, vx, vy]
+# BULLETS
 BULLET_SPEED = 15
 fire_delay = 150
-fire_timer = 0
-
-#GAME
-gravity = 0.2
-balls = []
-spawn_timer = 0
-score = 0
 
 # PLANETS
-planet_active = None
-planet_hp = 0
-planet_timer = 0
-planet_spawn_timer = 0
 PLANET_INTERVAL = 15000  # spawn every 15 sec
-wind_force = 0
-wave_timer = 0
 
-#POWER UPS
+# POWER UPS
 POWER_TYPES = ["rapid_fire", "double_shot", "triple_shot"]
-powerups = []
-active_power = None
-power_timer = 0
 POWER_DURATION = 5000
 
+gravity = 0.2
 
-#BALL
+
+# BALL CLASS
 class Ball:
     def __init__(self, x=None, y=None, vx=None, vy=None, radius=None):
         self.r = radius if radius else random.randint(20, 40)
         self.hp = self.r // 5
-
         self.image = pygame.transform.scale(
             meteor_img, (self.r * 2, self.r * 2)
         )
-
         if x is None:
             side = random.choice(["left", "right"])
             self.y = random.randint(50, 200)
@@ -87,7 +70,6 @@ class Ball:
         if self.y > FLOOR_Y - self.r:
             self.y = FLOOR_Y - self.r
             self.vy = -self.vy + gravity
-
         if self.x < self.r:
             self.x = self.r
             self.vx = -self.vx
@@ -99,10 +81,7 @@ class Ball:
         self.hp -= 1
 
     def draw(self, surface):
-        surface.blit(
-            self.image,
-            (int(self.x - self.r), int(self.y - self.r))
-        )
+        surface.blit(self.image, (int(self.x - self.r), int(self.y - self.r)))
         hp_text = font.render(str(self.hp), True, (255, 255, 255))
         surface.blit(
             hp_text,
@@ -114,7 +93,7 @@ class Ball:
         return pygame.Rect(self.x - self.r, self.y - self.r, self.r * 2, self.r * 2)
 
 
-#POWERUP
+# POWERUP CLASS
 class PowerUp:
     def __init__(self, x, y, kind):
         self.x = x
@@ -142,179 +121,198 @@ class PowerUp:
         return pygame.Rect(self.x - 10, self.y - 10, 20, 20)
 
 
-#MAIN LOOP
+# RESET FUNCTION
+def reset_game():
+    global player_x, bullets, balls, powerups, active_power, power_timer
+    global planet_active, planet_hp, planet_timer, planet_spawn_timer, wind_force, wave_timer
+    global score, fire_timer, spawn_timer, fire_delay
+
+    player_x = FIELD_WIDTH // 2 - player_width // 2
+    bullets = []
+    balls = []
+    powerups = []
+    active_power = None
+    power_timer = 0
+    planet_active = None
+    planet_hp = 0
+    planet_timer = 0
+    planet_spawn_timer = 0
+    wind_force = 0
+    wave_timer = 0
+    score = 0
+    fire_timer = 0
+    spawn_timer = 0
+    fire_delay = 150
+
+
+# END SCREEN FUNCTION
+def end_screen(final_score):
+    button_rect = pygame.Rect(FIELD_WIDTH//2 - 100, 600, 200, 50)
+    while True:
+        screen.fill((0, 0, 0))
+        title_text = font.render("You Died!", True, (255, 0, 0))
+        screen.blit(title_text, (FIELD_WIDTH//2 - title_text.get_width()//2, 400))
+        score_text = font.render(f"Score: {final_score}", True, (255, 255, 255))
+        screen.blit(score_text, (FIELD_WIDTH//2 - score_text.get_width()//2, 450))
+        pygame.draw.rect(screen, (0, 200, 0), button_rect)
+        btn_text = font.render("Restart", True, (255, 255, 255))
+        screen.blit(btn_text, (button_rect.x + button_rect.width//2 - btn_text.get_width()//2,
+                               button_rect.y + button_rect.height//2 - btn_text.get_height()//2))
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return False
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if button_rect.collidepoint(event.pos):
+                    return True
+        pygame.display.flip()
+        clock.tick(60)
+
+
+# INITIAL RESET
+reset_game()
 running = True
-while running:
+
+# MAIN LOOP
+while True:
     dt = clock.tick(60)
     fire_timer += dt
     spawn_timer += dt
-
     planet_spawn_timer += dt
 
-
-
-
-
-    if planet_spawn_timer >= PLANET_INTERVAL and planet_active is None:
-        planet_active = random.choice(["neptune", "earth"])
-        planet_hp = 40
-        planet_timer = 0
-        planet_spawn_timer = 0
     screen.fill((30, 30, 30))
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running = False
+            pygame.quit()
+            exit()
 
     keys = pygame.key.get_pressed()
     if keys[pygame.K_LEFT]:
         player_x -= player_speed
     if keys[pygame.K_RIGHT]:
         player_x += player_speed
-
     player_x = max(0, min(FIELD_WIDTH - player_width, player_x))
-    cannon_rect = pygame.Rect(player_x + 25, player_y + 30, player_width, player_height)
+    cannon_rect = pygame.Rect(player_x + 25, 720 + 30, player_width, player_height)
 
-    ufo_img = pygame.image.load("assets/UFO.png").convert_alpha()
-    ufo_img = pygame.transform.scale(ufo_img, (100, 100))
+    ufo_img = ufo_img_orig
 
-    #POWER TIMER
+    # POWER TIMER
     if active_power:
         power_timer += dt
         if power_timer >= POWER_DURATION:
             active_power = None
             fire_delay = 150
-
     if active_power == "rapid_fire":
         fire_delay = 60
 
-    if planet_active:
-        planet_timer += dt
-
-    # Planet position (background boss)
+    # PLANETS
     planet_rect = pygame.Rect(FIELD_WIDTH//2 - 80, 80, 160, 160)
-
-    #PLANET SYSTEM
     if planet_active:
         planet_timer += dt
-        planet_rect = pygame.Rect(FIELD_WIDTH//2 - 80, 80, 160, 160)
-
-        #NEPTUNE (Wind Push)
         if planet_active == "neptune":
             screen.blit(neptune_img, (planet_rect.x - 150, planet_rect.y - 150))
-
             if (planet_timer // 2000) % 2 == 0:
                 wind_force = 3
             else:
                 wind_force = -3
-
             player_x += wind_force
-
-        #EARTH (Side Waves)
         elif planet_active == "earth":
             screen.blit(earth_img, (planet_rect.x-20, planet_rect.y-20))
-
             wave_timer += dt
             if wave_timer > 2500:
                 left_wave = pygame.Rect(0, FLOOR_Y - 150, 250, 150)
                 right_wave = pygame.Rect(FIELD_WIDTH - 250, FLOOR_Y - 150, 250, 150)
-
                 pygame.draw.rect(screen, (0, 100, 255), left_wave)
                 pygame.draw.rect(screen, (0, 100, 255), right_wave)
-
                 if cannon_rect.colliderect(left_wave) or cannon_rect.colliderect(right_wave):
-                    running = False
-
+                    if end_screen(score):
+                        reset_game()
+                    else:
+                        pygame.quit()
+                        exit()
                 wave_timer = 0
-
-        #Planet HP Bar
+        # Planet HP Bar
         pygame.draw.rect(screen, (100, 0, 0), (250, 40, 300, 20))
         pygame.draw.rect(screen, (255, 0, 0), (250, 40, 300 * (planet_hp/40), 20))
-
-        # End planet
         if planet_hp <= 0:
             planet_spawn_timer = 0
             planet_active = None
             wind_force = 0
             wave_timer = 0
-            
+    else:
+        if planet_spawn_timer >= PLANET_INTERVAL:
+            planet_active = random.choice(["neptune", "earth"])
+            planet_hp = 40
+            planet_timer = 0
+            planet_spawn_timer = 0
 
-
-    #AUTO FIRE
-# AUTO FIRE
+    # AUTO FIRE
     if fire_timer >= fire_delay:
-        cx = player_x + 50      
-        cy = player_y + 25         
-
+        cx = player_x + 50
+        cy = 720 + 25
         if active_power == "double_shot":
             bullets.append([cx - 15, cy, 0, -BULLET_SPEED])
             bullets.append([cx + 15, cy, 0, -BULLET_SPEED])
-
         elif active_power == "triple_shot":
             bullets.append([cx, cy, 0, -BULLET_SPEED])
             bullets.append([cx, cy, -5, -BULLET_SPEED])
             bullets.append([cx, cy, 5, -BULLET_SPEED])
-
         else:
             bullets.append([cx, cy, 0, -BULLET_SPEED])
-
         fire_timer = 0
 
-    #SPAWN BALLS
+    # SPAWN BALLS
     if spawn_timer > 5000:
         balls.append(Ball())
         spawn_timer = 0
 
-    #BALLS
+    # BALLS
     for ball in balls[:]:
         ball.update()
         if cannon_rect.colliderect(ball.get_rect()):
-            running = False
+            if end_screen(score):
+                reset_game()
+            else:
+                pygame.quit()
+                exit()
         ball.draw(screen)
 
-    #BULLETS
+    # BULLETS
     for bullet in bullets[:]:
         bullet[0] += bullet[2]
         bullet[1] += bullet[3]
-
         if bullet[1] < 0 or bullet[0] < 0 or bullet[0] > FIELD_WIDTH:
             bullets.remove(bullet)
             continue
-        
-        
         bullet_rect = pygame.Rect(bullet[0] - 5, bullet[1] - 5, 10, 10)
-        #BULLET HITS PLANET
-        if planet_active:
-            planet_rect = pygame.Rect(FIELD_WIDTH//2 - 80, 80, 160, 160)
-            if bullet_rect.colliderect(planet_rect):
-                bullets.remove(bullet)
-                planet_hp -= 1
-                continue
-
+        # Bullet hits planet
+        if planet_active and bullet_rect.colliderect(planet_rect):
+            bullets.remove(bullet)
+            planet_hp -= 1
+            continue
+        # Bullet hits ball
         for ball in balls[:]:
             if bullet_rect.colliderect(ball.get_rect()):
                 bullets.remove(bullet)
                 ball.take_damage()
-                score += 1  # hit score
-
+                score += 1
                 if ball.hp <= 0:
-                    score += 10  # destroy bonus
+                    score += 10
                     x, y, vx, r, vy = ball.x, ball.y, ball.vx, ball.r, ball.vy
                     balls.remove(ball)
-
                     if random.random() < 0.3:
                         powerups.append(PowerUp(x, y, random.choice(POWER_TYPES)))
-
                     if r > MIN_RADIUS:
                         new_r = r // 1.5
                         split_vy = -abs(vy)
                         balls.append(Ball(x, y, -abs(vx), split_vy, new_r))
                         balls.append(Ball(x, y, abs(vx), split_vy, new_r))
                 break
-
         screen.blit(bullet_img, (bullet[0] - 9, bullet[1] - 9))
 
-    #POWERUPS
+    # POWERUPS
     for p in powerups[:]:
         p.update()
         p.draw(screen)
@@ -325,11 +323,10 @@ while running:
         elif p.y > 1000:
             powerups.remove(p)
 
-    #SCORE
+    # SCORE
     score_text = font.render(f"Score: {score}", True, (255, 255, 255))
     screen.blit(score_text, (20, 20))
 
-    screen.blit(ufo_img, (player_x, player_y))
+    # PLAYER
+    screen.blit(ufo_img, (player_x, 720))
     pygame.display.flip()
-
-pygame.quit()
