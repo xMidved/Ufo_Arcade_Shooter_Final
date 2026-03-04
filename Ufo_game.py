@@ -172,7 +172,6 @@ while running:
 
     player_x = max(0, min(FIELD_WIDTH - player_width, player_x))
     cannon_rect = pygame.Rect(player_x + 25, player_y + 30, player_width, player_height)
-    pygame.draw.rect(screen, (255, 0, 0), cannon_rect, 2)
 
     ufo_img = pygame.image.load("assets/UFO.png").convert_alpha()
     ufo_img = pygame.transform.scale(ufo_img, (100, 100))
