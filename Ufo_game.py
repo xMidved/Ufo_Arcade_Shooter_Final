@@ -2,7 +2,7 @@ import pygame
 import random
 
 pygame.init()
-screen = pygame.display.set_mode((800, 1000))
+screen = pygame.display.set_mode((800, 830))
 pygame.display.set_caption("Ufo Game")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("arial", 24)
@@ -21,11 +21,26 @@ earth_img = pygame.transform.scale(earth_img, (200, 200))
 ufo_img_orig = pygame.image.load("assets/UFO.png").convert_alpha()
 ufo_img_orig = pygame.transform.scale(ufo_img_orig, (100, 100))
 meteor_img = pygame.image.load("assets/meteor.png").convert_alpha()
+wave_sheet = pygame.image.load("assets/wave sprite.png").convert_alpha()
+wave_frames = []
+frame_width = wave_sheet.get_width() // 16   # adjust if not 8 frames
+frame_height = wave_sheet.get_height()
+
+for i in range(16):
+    frame = wave_sheet.subsurface(
+        (i * frame_width, 0, frame_width, frame_height)
+    )
+    wave_frames.append(frame)
+wave_frame_index = 0
+wave_anim_timer = 0
+wave_anim_speed = 100   # lower = faster animation
 
 # PLAYER
+player_speed = 10
 player_width = 50
 player_height = 27
-player_speed = 10
+ufo_width = ufo_img_orig.get_width()
+ufo_height = ufo_img_orig.get_height()
 
 # BULLETS
 BULLET_SPEED = 15
@@ -193,9 +208,9 @@ while True:
         player_x -= player_speed
     if keys[pygame.K_RIGHT]:
         player_x += player_speed
-    player_x = max(0, min(FIELD_WIDTH - player_width, player_x))
+    player_x = max(0, min(FIELD_WIDTH - ufo_width, player_x))
     cannon_rect = pygame.Rect(player_x + 25, 720 + 30, player_width, player_height)
-
+    pygame.draw.rect(screen, (255, 0, 0), cannon_rect, 2)
     ufo_img = ufo_img_orig
 
     # POWER TIMER
@@ -220,19 +235,43 @@ while True:
             player_x += wind_force
         elif planet_active == "earth":
             screen.blit(earth_img, (planet_rect.x-20, planet_rect.y-20))
+
             wave_timer += dt
+
+    # When wave attack is active
             if wave_timer > 2500:
+
+                # Animate waves
+                wave_anim_timer += dt
+                if wave_anim_timer > wave_anim_speed:
+                    wave_frame_index = (wave_frame_index + 1) % len(wave_frames)
+                    wave_anim_timer = 0
+
+                current_wave = wave_frames[wave_frame_index]
+
+                # Scale wave to match hitbox
+                scaled_wave = pygame.transform.scale(current_wave, (250, 150))
+
+        # Draw waves
+                screen.blit(scaled_wave, (0, FLOOR_Y - 150))
+                screen.blit(scaled_wave, (FIELD_WIDTH - 250, FLOOR_Y - 150))
+
+            # Invisible hitboxes
                 left_wave = pygame.Rect(0, FLOOR_Y - 150, 250, 150)
                 right_wave = pygame.Rect(FIELD_WIDTH - 250, FLOOR_Y - 150, 250, 150)
-                pygame.draw.rect(screen, (0, 100, 255), left_wave)
-                pygame.draw.rect(screen, (0, 100, 255), right_wave)
-                if cannon_rect.colliderect(left_wave) or cannon_rect.colliderect(right_wave):
-                    if end_screen(score):
-                        reset_game()
-                    else:
-                        pygame.quit()
-                        exit()
-                wave_timer = 0
+
+                # Only hit on 8th frame
+                if wave_frame_index == 7 or wave_frame_index == 8 or wave_frame_index == 9:
+                    if cannon_rect.colliderect(left_wave) or cannon_rect.colliderect(right_wave):
+                        if end_screen(score):
+                            reset_game()
+                        else:
+                            pygame.quit()
+                            exit()
+
+        # Reset after attack duration
+                if wave_timer > 4000:
+                    wave_timer = 0
         # Planet HP Bar
         pygame.draw.rect(screen, (100, 0, 0), (250, 40, 300, 20))
         pygame.draw.rect(screen, (255, 0, 0), (250, 40, 300 * (planet_hp/40), 20))
