@@ -260,7 +260,7 @@ while True:
                 left_wave = pygame.Rect(0, FLOOR_Y - 150, 250, 150)
                 right_wave = pygame.Rect(FIELD_WIDTH - 250, FLOOR_Y - 150, 250, 150)
 
-                # Only hit on 8th frame
+                # Only hit on 7h, 8th, or 9th frame
                 if wave_frame_index == 7 or wave_frame_index == 8 or wave_frame_index == 9:
                     if cannon_rect.colliderect(left_wave) or cannon_rect.colliderect(right_wave):
                         if end_screen(score):
@@ -280,6 +280,7 @@ while True:
             planet_active = None
             wind_force = 0
             wave_timer = 0
+            score += 50
     else:
         if planet_spawn_timer >= PLANET_INTERVAL:
             planet_active = random.choice(["neptune", "earth"])
