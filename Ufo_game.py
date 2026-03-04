@@ -11,12 +11,12 @@ MIN_RADIUS = 25
 FIELD_WIDTH = 800
 FLOOR_Y = 800
 
-bullet_img = pygame.image.load("Bullet.png").convert_alpha()
+bullet_img = pygame.image.load("assets/Bullet.png").convert_alpha()
 bullet_img = pygame.transform.scale(bullet_img, (18, 18))
 
 
 
-meteor_img = pygame.image.load("meteor.png").convert_alpha()
+meteor_img = pygame.image.load("assets/meteor.png").convert_alpha()
 
 #PLAYER
 player_width = 50
@@ -174,7 +174,7 @@ while running:
     cannon_rect = pygame.Rect(player_x + 25, player_y + 30, player_width, player_height)
     pygame.draw.rect(screen, (255, 0, 0), cannon_rect, 2)
 
-    ufo_img = pygame.image.load("UFO.png").convert_alpha()
+    ufo_img = pygame.image.load("assets/UFO.png").convert_alpha()
     ufo_img = pygame.transform.scale(ufo_img, (100, 100))
 
     #POWER TIMER
