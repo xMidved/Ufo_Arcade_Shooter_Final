@@ -13,8 +13,8 @@ FLOOR_Y = 800
 
 bullet_img = pygame.image.load("assets/Bullet.png").convert_alpha()
 bullet_img = pygame.transform.scale(bullet_img, (18, 18))
-
-
+neptune_img = pygame.image.load("assets/neptune.png").convert_alpha()
+neptune_img = pygame.transform.scale(neptune_img, (450, 450))
 
 meteor_img = pygame.image.load("assets/meteor.png").convert_alpha()
 
@@ -199,7 +199,7 @@ while running:
 
         #NEPTUNE (Wind Push)
         if planet_active == "neptune":
-            pygame.draw.circle(screen, (0, 120, 255), planet_rect.center, 80)
+            screen.blit(neptune_img, (planet_rect.x - 150, planet_rect.y - 150))
 
             if (planet_timer // 2000) % 2 == 0:
                 wind_force = 3
